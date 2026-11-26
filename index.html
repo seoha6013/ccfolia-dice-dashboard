@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>주사위 아카이브 · 코코포리아 로그 통계</title>
+  <meta name="description" content="코코포리아 로그(.html)를 올리면 캐릭터별 CoC 7판 주사위 통계와 명장면을 보여줘요. 파일은 브라우저 밖으로 나가지 않아요.">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    /* 깜빡임 없이 테마 먼저 적용 */
+    (function(){ try { var t = localStorage.getItem('dice-theme'); if (t) document.documentElement.dataset.theme = t; } catch(e){} })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="brand__die" aria-hidden="true">⚀</span>
+      <div>
+        <h1>주사위 아카이브</h1>
+        <p>코코포리아 로그로 보는 CoC 7판 주사위 통계</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="라이트/다크 모드 바꾸기">
+      <span class="i-sun" aria-hidden="true">☀</span><span class="i-moon" aria-hidden="true">☾</span>
+    </button>
+  </header>
+
+  <main>
+    <!-- 업로드 -->
+    <section class="card upload" id="uploadCard">
+      <label class="drop" id="drop" for="fileInput">
+        <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple hidden>
+        <span class="drop__icon" aria-hidden="true">📜</span>
+        <strong>로그 파일을 여기에 끌어다 놓거나 눌러서 고르세요</strong>
+        <span class="muted">코코포리아 → 로그 출력으로 받은 <code>.html</code> 파일 · 여러 개 한 번에 가능</span>
+      </label>
+      <div class="upload__row">
+        <button class="btn btn--soft" id="sampleBtn" type="button">샘플 로그 불러오기</button>
+        <button class="btn btn--ghost" id="resetBtn" type="button" hidden>모두 지우기</button>
+        <span class="privacy">🔒 파일은 이 브라우저 안에서만 읽어요. 어디에도 올라가지 않아요.</span>
+      </div>
+      <ul class="files" id="fileList"></ul>
+      <p class="msg" id="msg" role="status"></p>
+    </section>
+
+    <div id="dash" hidden>
+      <!-- 요약 -->
+      <section class="stats" aria-label="전체 요약">
+        <div class="stat"><span class="stat__k">총 판정</span><b class="stat__v" id="sTotal">0</b><span class="stat__s">1D100 판정 횟수</span></div>
+        <div class="stat"><span class="stat__k">평균 주사위</span><b class="stat__v" id="sAvg">–</b><span class="stat__s">낮을수록 운이 좋아요</span></div>
+        <div class="stat"><span class="stat__k">최고 행운</span><b class="stat__v stat__v--name" id="sLucky">–</b><span class="stat__s" id="sLuckySub"></span></div>
+        <div class="stat"><span class="stat__k">최다 판정 기능</span><b class="stat__v stat__v--name" id="sSkill">–</b><span class="stat__s" id="sSkillSub"></span></div>
+      </section>
+
+      <!-- 필터 -->
+      <section class="filters" aria-label="필터">
+        <div class="chips" id="charChips" role="tablist" aria-label="캐릭터"></div>
+        <div class="tabsel">
+          <label for="tabSel" class="muted">탭</label>
+          <select id="tabSel"></select>
+        </div>
+      </section>
+
+      <!-- 캐릭터 비교 표 -->
+      <section class="card">
+        <div class="card__head"><h2>캐릭터별 비교</h2><span class="muted" id="cmpNote"></span></div>
+        <div class="table-wrap">
+          <table class="cmp" id="cmpTable">
+            <thead><tr><th>캐릭터</th><th>판정</th><th>평균</th><th>성공률</th><th>대성공</th><th>대실패</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="grid2">
+        <section class="card">
+          <div class="card__head"><h2>성공 등급 분포</h2><span class="muted" id="gradeNote"></span></div>
+          <div class="chart chart--donut"><canvas id="gradeChart"></canvas></div>
+        </section>
+        <section class="card">
+          <div class="card__head"><h2>기능 Top 5</h2><span class="muted">사용 횟수 · 성공률</span></div>
+          <div class="chart"><canvas id="skillChart"></canvas></div>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card__head"><h2>주사위 흐름</h2><span class="muted">세션 순서대로 · 아래로 갈수록 좋은 눈</span></div>
+        <div class="chart chart--wide"><canvas id="flowChart"></canvas></div>
+      </section>
+
+      <section class="card">
+        <div class="card__head"><h2>🎲 주사위 명예의 전당</h2><span class="muted">대성공·대실패, 또는 1~5 / 96~100이 나온 순간</span></div>
+        <div class="hof" id="hof"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    CoC 7판 판정 결과(대성공·극단적 성공·어려운 성공·보통 성공·실패·대실패)를 읽어요. 한국어·일본어 코코포리아 로그 지원.
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+  <script src="js/parser.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
